@@ -28,6 +28,11 @@ class FloatWindowService : Service() {
         val rootContainer = TouchContainer(this)
         rootContainer.setBackgroundColor(Color.BLACK)
         rootContainer.id = R.id.container
+        rootContainer.listener = object : TouchContainer.Listener{
+            override fun move(dx: Int, dy: Int) {
+                updateWindowPosition(dx,dy)
+            }
+        }
         rootContainer
     }
     private val layoutParameter: WindowManager.LayoutParams by lazy {
@@ -97,6 +102,13 @@ class FloatWindowService : Service() {
 
     private fun getFragmentManager(): FragmentManager {
         return mFragments.supportFragmentManager
+    }
+
+    private fun updateWindowPosition(dx:Int,dy:Int){
+        Log.d("dragon_update","$dx $dy")
+        layoutParameter.x = layoutParameter.x + dx
+        layoutParameter.y = layoutParameter.y + dy
+        windowManager.updateViewLayout(rootContainer,layoutParameter)
     }
 
     private fun createWindowParams(width: Int, height: Int): WindowManager.LayoutParams {

@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.widget.FrameLayout
+import kotlin.math.absoluteValue
 
 /**
  * @author chenjiulong
@@ -12,7 +14,13 @@ import android.widget.FrameLayout
 
 class TouchContainer : FrameLayout {
 
-    var interupted = false
+    private var interrupted = false
+    private var lastX = 0f
+    private var lastY = 0f
+    private var activePointId = 0
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+
+    var listener: Listener? = null
 
 
     constructor(context: Context) : super(context)
@@ -28,28 +36,30 @@ class TouchContainer : FrameLayout {
         ev?.let {
             when (it.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    Log.d(
-                        "dragon_debug",
-                        "onInterceptTouchEvent action ${ev.actionMasked} actionIndex ${ev.actionIndex}  getPointerId ${ev.getPointerId(
-                            ev.actionIndex
-                        )}"
-                    )
-                    interupted = true
+                    lastX = it.x
+                    lastY = it.y
+                    activePointId = it.getPointerId(it.actionIndex)
+                    interrupted = false
                 }
-                MotionEvent.ACTION_UP -> {
-                    Log.d(
-                        "dragon_debug",
-                        "onInterceptTouchEvent action ${ev.actionMasked} actionIndex ${ev.actionIndex}  getPointerId ${ev.getPointerId(
-                            ev.actionIndex
-                        )}"
-                    )
+                MotionEvent.ACTION_MOVE -> {
+                    val currentPointId = it.getPointerId(it.actionIndex)
+                    if (currentPointId == activePointId) {
+                        val currentX = it.getX(it.actionIndex)
+                        val currentY = it.getY(it.actionIndex)
+                        if ((currentX - lastX).absoluteValue > touchSlop || (currentY - lastY).absoluteValue > touchSlop) {
+                            lastX = currentX
+                            lastY = currentY
+                            requestDisallowInterceptTouchEvent(true)
+                            interrupted = true
+                        }
+                    }
                 }
                 else -> {
 
                 }
             }
         }
-        if (interupted) {
+        if (interrupted) {
             return true
         }
         return super.onInterceptTouchEvent(ev)
@@ -58,49 +68,27 @@ class TouchContainer : FrameLayout {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             when (it.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    Log.d(
-                        "dragon_debug",
-                        "onTouchEvent action ${it.actionMasked} actionIndex ${it.actionIndex}  getPointerId ${it.getPointerId(
-                            it.actionIndex
-                        )}"
-                    )
-                    interupted = true
-                }
-                MotionEvent.ACTION_POINTER_DOWN ->{
-                    Log.d(
-                        "dragon_debug",
-                        "onTouchEvent action ${it.actionMasked} actionIndex ${it.actionIndex}  getPointerId ${it.getPointerId(
-                            it.actionIndex
-                        )}"
-                    )
+                MotionEvent.ACTION_MOVE ->{
+                    val currentX = it.x
+                    val currentY = it.y
 
+                    Log.d("dragon_move"," $currentX $currentY")
+                    listener?.move((currentX - lastX).toInt(), (currentY - lastY).toInt())
+                    lastX = currentX
+                    lastY = currentY
                 }
-                MotionEvent.ACTION_POINTER_UP->{
-                    Log.d(
-                        "dragon_debug",
-                        "onTouchEvent action ${it.actionMasked} actionIndex ${it.actionIndex}  getPointerId ${it.getPointerId(
-                            it.actionIndex
-                        )}"
-                    )
-
-                }
-                MotionEvent.ACTION_UP -> {
-                    Log.d(
-                        "dragon_debug",
-                        "onTouchEvent action ${it.actionMasked} actionIndex ${it.actionIndex}  getPointerId ${it.getPointerId(
-                            it.actionIndex
-                        )}"
-                    )
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 }
                 else -> {
 
                 }
             }
         }
-        if (interupted) {
-            return true
-        }
-        return super.onInterceptTouchEvent(event)
+        return true
+    }
+
+
+    interface Listener {
+        fun move(dx: Int, dy: Int):Unit
     }
 }
