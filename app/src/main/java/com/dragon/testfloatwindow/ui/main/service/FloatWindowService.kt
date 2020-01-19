@@ -17,6 +17,7 @@ import androidx.fragment.app.FragmentHostCallback
 import androidx.fragment.app.FragmentManager
 import com.dragon.testfloatwindow.R
 import com.dragon.testfloatwindow.ui.main.BlankFragment
+import com.dragon.testfloatwindow.ui.main.widgets.TouchContainer
 
 class FloatWindowService : Service() {
 
@@ -24,7 +25,7 @@ class FloatWindowService : Service() {
         getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
     private val rootContainer: ViewGroup by lazy {
-        val rootContainer = FrameLayout(this)
+        val rootContainer = TouchContainer(this)
         rootContainer.setBackgroundColor(Color.BLACK)
         rootContainer.id = R.id.container
         rootContainer
