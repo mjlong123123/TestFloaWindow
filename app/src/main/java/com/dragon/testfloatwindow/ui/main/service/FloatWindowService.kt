@@ -11,7 +11,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.*
-import android.widget.FrameLayout
 import androidx.fragment.app.FragmentController
 import androidx.fragment.app.FragmentHostCallback
 import androidx.fragment.app.FragmentManager
@@ -96,9 +95,6 @@ class FloatWindowService : Service() {
         windowManager.removeView(rootContainer)
         Log.d("dragon_debug", "onDestroy ")
     }
-
-
-
 
     private fun getFragmentManager(): FragmentManager {
         return mFragments.supportFragmentManager

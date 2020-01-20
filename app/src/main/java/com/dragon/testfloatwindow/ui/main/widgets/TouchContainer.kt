@@ -36,16 +36,16 @@ class TouchContainer : FrameLayout {
         ev?.let {
             when (it.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    lastX = it.x
-                    lastY = it.y
+                    lastX = it.rawX
+                    lastY = it.rawY
                     activePointId = it.getPointerId(it.actionIndex)
                     interrupted = false
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val currentPointId = it.getPointerId(it.actionIndex)
                     if (currentPointId == activePointId) {
-                        val currentX = it.getX(it.actionIndex)
-                        val currentY = it.getY(it.actionIndex)
+                        val currentX = it.rawX
+                        val currentY = it.rawY
                         if ((currentX - lastX).absoluteValue > touchSlop || (currentY - lastY).absoluteValue > touchSlop) {
                             lastX = currentX
                             lastY = currentY
@@ -68,14 +68,18 @@ class TouchContainer : FrameLayout {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             when (it.actionMasked) {
-                MotionEvent.ACTION_MOVE ->{
-                    val currentX = it.x
-                    val currentY = it.y
+                MotionEvent.ACTION_MOVE -> {
 
-                    Log.d("dragon_move"," $currentX $currentY")
-                    listener?.move((currentX - lastX).toInt(), (currentY - lastY).toInt())
-                    lastX = currentX
-                    lastY = currentY
+                    val currentPointId = it.getPointerId(it.actionIndex)
+                    if (currentPointId == activePointId) {
+                        val currentX = it.rawX
+                        val currentY = it.rawY
+
+                        Log.d("dragon_move", " $currentX $currentY")
+                        listener?.move((currentX - lastX).toInt(), (currentY - lastY).toInt())
+                        lastX = currentX
+                        lastY = currentY
+                    }
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 }
@@ -89,6 +93,6 @@ class TouchContainer : FrameLayout {
 
 
     interface Listener {
-        fun move(dx: Int, dy: Int):Unit
+        fun move(dx: Int, dy: Int)
     }
 }
