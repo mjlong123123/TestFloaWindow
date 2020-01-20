@@ -1,10 +1,12 @@
 package com.dragon.testfloatwindow.ui.main.service
 
+import android.animation.LayoutTransition
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -17,6 +19,7 @@ import androidx.fragment.app.FragmentManager
 import com.dragon.testfloatwindow.R
 import com.dragon.testfloatwindow.ui.main.BlankFragment
 import com.dragon.testfloatwindow.ui.main.widgets.TouchContainer
+import kotlin.math.absoluteValue
 
 class FloatWindowService : Service() {
 
@@ -26,16 +29,39 @@ class FloatWindowService : Service() {
     private val rootContainer: ViewGroup by lazy {
         val rootContainer = TouchContainer(this)
         rootContainer.setBackgroundColor(Color.BLACK)
-        rootContainer.id = R.id.container
-        rootContainer.listener = object : TouchContainer.Listener{
+        rootContainer.id = R.id.window_root_id
+        rootContainer.layoutTransition = LayoutTransition()
+        rootContainer.listener = object : TouchContainer.Listener {
             override fun move(dx: Int, dy: Int) {
-                updateWindowPosition(dx,dy)
+                updateWindowPosition(dx, dy)
             }
         }
         rootContainer
     }
     private val layoutParameter: WindowManager.LayoutParams by lazy {
-        createWindowParams(400, 400)
+        val params = WindowManager.LayoutParams()
+        params.width = 400
+        params.height = 400
+        params.type = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            Build.VERSION.SDK_INT == Build.VERSION_CODES.N_MR1 -> WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+            else -> WindowManager.LayoutParams.TYPE_TOAST
+        }
+        params.flags = (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+                or WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        params.format = PixelFormat.TRANSLUCENT
+        params.gravity = Gravity.LEFT or Gravity.TOP
+        params
+    }
+
+    private val displayRect: Rect by lazy {
+        val rect = Rect()
+        windowManager.defaultDisplay.getRectSize(rect)
+        rect
     }
 
 
@@ -67,7 +93,7 @@ class FloatWindowService : Service() {
         intent?.let {
             when (it.action) {
                 "show window" -> {
-                    getFragmentManager().beginTransaction().replace(R.id.container, BlankFragment())
+                    getFragmentManager().beginTransaction().replace(R.id.window_root_id, BlankFragment())
                         .commit()
                 }
                 else -> {
@@ -85,7 +111,6 @@ class FloatWindowService : Service() {
         windowManager.addView(rootContainer, layoutParameter)
         mFragments.attachHost(null)
         mFragments.dispatchResume()
-        Log.d("dragon_debug", "onCreate ")
     }
 
 
@@ -93,18 +118,44 @@ class FloatWindowService : Service() {
         super.onDestroy()
         mFragments.dispatchDestroy()
         windowManager.removeView(rootContainer)
-        Log.d("dragon_debug", "onDestroy ")
     }
 
     private fun getFragmentManager(): FragmentManager {
         return mFragments.supportFragmentManager
     }
 
-    private fun updateWindowPosition(dx:Int,dy:Int){
-        Log.d("dragon_update","$dx $dy")
-        layoutParameter.x = layoutParameter.x + dx
-        layoutParameter.y = layoutParameter.y + dy
-        windowManager.updateViewLayout(rootContainer,layoutParameter)
+    fun updateWindowSize(width: Int, height: Int) {
+        if (layoutParameter.width != width || layoutParameter.height != height) {
+            layoutParameter.width = width
+            layoutParameter.height = height
+            checkRange()
+            windowManager.updateViewLayout(rootContainer, layoutParameter)
+        }
+    }
+
+    private fun updateWindowPosition(dx: Int, dy: Int) {
+        if (dx.absoluteValue > 0 || dy.absoluteValue > 0) {
+            Log.d("dragon_p", "x ${layoutParameter.x} y ${layoutParameter.y}")
+            layoutParameter.x = layoutParameter.x + dx
+            layoutParameter.y = layoutParameter.y + dy
+            checkRange()
+            windowManager.updateViewLayout(rootContainer, layoutParameter)
+        }
+    }
+
+    private fun checkRange() {
+        when {
+            layoutParameter.x < 0 -> layoutParameter.x = 0
+            layoutParameter.x + layoutParameter.width > displayRect.width() -> {
+                layoutParameter.x = displayRect.width() - layoutParameter.width
+            }
+        }
+        when {
+            layoutParameter.y < 0 -> layoutParameter.y = 0
+            layoutParameter.y + layoutParameter.height > displayRect.height() -> {
+                layoutParameter.y = displayRect.height() - layoutParameter.height
+            }
+        }
     }
 
     private fun createWindowParams(width: Int, height: Int): WindowManager.LayoutParams {
@@ -120,7 +171,8 @@ class FloatWindowService : Service() {
                 or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-                or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
+                or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+                or WindowManager.LayoutParams.FLAG_FULLSCREEN)
         params.format = PixelFormat.TRANSLUCENT
         params.gravity = Gravity.LEFT or Gravity.TOP
         return params

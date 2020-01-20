@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 
 import com.dragon.testfloatwindow.R
+import com.dragon.testfloatwindow.ui.main.service.FloatWindowService
+import kotlinx.android.synthetic.main.fragment_blank.*
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -43,6 +45,16 @@ class BlankFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_blank, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        helloText.setOnClickListener {
+            v ->
+            val floatWindowService = host as? FloatWindowService
+            floatWindowService?.updateWindowSize(900,900)
+            fragmentManager?.beginTransaction()?.replace(R.id.window_root_id, ItemFragment())?.commit()
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
