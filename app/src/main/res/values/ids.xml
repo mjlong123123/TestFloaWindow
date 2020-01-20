@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="window_root_id" type="id"/>
     <item name="window_content_id" type="id"/>
 </resources>

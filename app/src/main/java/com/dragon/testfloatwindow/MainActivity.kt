@@ -20,15 +20,10 @@ class MainActivity : AppCompatActivity() {
                 .commitNow()
         }
         if (canShowFloat()) {
-            startService(Intent(this, FloatWindowService::class.java))
+//            startService(Intent(this, FloatWindowService::class.java))
         } else {
             requestShowFloatPermission()
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopService(Intent(this, FloatWindowService::class.java))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

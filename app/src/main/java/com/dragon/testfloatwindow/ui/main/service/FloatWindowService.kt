@@ -13,6 +13,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.*
+import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.fragment.app.FragmentController
 import androidx.fragment.app.FragmentHostCallback
 import androidx.fragment.app.FragmentManager
@@ -27,13 +29,32 @@ class FloatWindowService : Service() {
         getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
     private val rootContainer: ViewGroup by lazy {
-        val rootContainer = TouchContainer(this)
-        rootContainer.setBackgroundColor(Color.BLACK)
-        rootContainer.id = R.id.window_root_id
-        rootContainer.layoutTransition = LayoutTransition()
-        rootContainer.listener = object : TouchContainer.Listener {
-            override fun move(dx: Int, dy: Int) {
-                updateWindowPosition(dx, dy)
+        val rootContainer = FrameLayout(this).apply {
+            setBackgroundColor(Color.BLACK)
+            layoutTransition = LayoutTransition()
+        }
+        FrameLayout(this).apply {
+            id = R.id.window_content_id
+            rootContainer.addView(this)
+        }
+        TouchContainer(this).apply {
+            setBackgroundColor(Color.BLUE)
+            listener = object : TouchContainer.Listener {
+                override fun move(dx: Int, dy: Int) {
+                    updateWindowPosition(dx, dy)
+                }
+            }
+            rootContainer.addView(this,FrameLayout.LayoutParams(50,50).apply {
+                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            })
+        }
+        ImageView(this).apply {
+            setBackgroundResource(R.drawable.ic_close_black_24dp)
+            rootContainer.addView(this,FrameLayout.LayoutParams(100,100).apply {
+                gravity = Gravity.TOP or Gravity.RIGHT
+            })
+            setOnClickListener {
+                stopSelf()
             }
         }
         rootContainer
@@ -93,7 +114,7 @@ class FloatWindowService : Service() {
         intent?.let {
             when (it.action) {
                 "show window" -> {
-                    getFragmentManager().beginTransaction().replace(R.id.window_root_id, BlankFragment())
+                    getFragmentManager().beginTransaction().replace(R.id.window_content_id, BlankFragment())
                         .commit()
                 }
                 else -> {

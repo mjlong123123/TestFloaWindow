@@ -1,6 +1,8 @@
 package com.dragon.testfloatwindow.ui.main
 
+import android.app.Service
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -60,6 +62,15 @@ class ItemFragment : Fragment() {
         } /*else {
             throw RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener")
         }*/
+
+        listener = object:OnListFragmentInteractionListener{
+            override fun onListFragmentInteraction(item: DummyItem?) {
+                val content = host as? Context
+                content?.let {
+                    startActivity(Intent(it, TestActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+                }
+            }
+        }
     }
 
     override fun onDetach() {
