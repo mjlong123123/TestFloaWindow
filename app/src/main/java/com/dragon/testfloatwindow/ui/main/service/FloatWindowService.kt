@@ -44,8 +44,9 @@ class FloatWindowService : Service() {
                     updateWindowPosition(dx, dy)
                 }
             }
-            rootContainer.addView(this,FrameLayout.LayoutParams(50,50).apply {
+            rootContainer.addView(this,FrameLayout.LayoutParams(100,100).apply {
                 gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                setBackgroundResource(R.drawable.ic_drag_handle_black_24dp)
             })
         }
         ImageView(this).apply {
