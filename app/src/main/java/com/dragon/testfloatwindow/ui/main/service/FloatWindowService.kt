@@ -21,6 +21,7 @@ import androidx.fragment.app.FragmentManager
 import com.dragon.testfloatwindow.R
 import com.dragon.testfloatwindow.ui.main.BlankFragment
 import com.dragon.testfloatwindow.ui.main.widgets.TouchContainer
+import java.util.*
 import kotlin.math.absoluteValue
 
 class FloatWindowService : Service() {
@@ -55,7 +56,10 @@ class FloatWindowService : Service() {
                 gravity = Gravity.TOP or Gravity.RIGHT
             })
             setOnClickListener {
-                stopSelf()
+                queue.pollLast()?.let {
+                    Log.e("dragon_track","stop $it")
+                    stopSelf(it)
+                }
             }
         }
         rootContainer
@@ -106,6 +110,9 @@ class FloatWindowService : Service() {
             }
         })
 
+    private val queue = LinkedList<Int>()
+
+
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
     }
@@ -123,6 +130,8 @@ class FloatWindowService : Service() {
                 }
             }
         }
+        Log.e("dragon_track","onStartCommand   $startId")
+        queue.offer(startId)
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -130,6 +139,7 @@ class FloatWindowService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.e("dragon_track","onCreate")
         windowManager.addView(rootContainer, layoutParameter)
         mFragments.attachHost(null)
         mFragments.dispatchResume()
@@ -138,6 +148,7 @@ class FloatWindowService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.e("dragon_track","onDestroy")
         mFragments.dispatchDestroy()
         windowManager.removeView(rootContainer)
     }

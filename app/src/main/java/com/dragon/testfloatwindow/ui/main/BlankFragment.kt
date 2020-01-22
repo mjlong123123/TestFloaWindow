@@ -53,7 +53,7 @@ class BlankFragment : Fragment() {
             v ->
             val floatWindowService = host as? FloatWindowService
             floatWindowService?.updateWindowSize(900,900)
-            fragmentManager?.beginTransaction()?.replace(R.id.window_content_id, ItemFragment())?.commit()
+            fragmentManager?.beginTransaction()?.replace(R.id.window_content_id, PlayerFragment.newInstance())?.commit()
         }
     }
 
